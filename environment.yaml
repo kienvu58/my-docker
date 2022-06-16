@@ -1,0 +1,12 @@
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - conda-forge::nodejs=17.9.0
+  - conda-forge::pandas
+  - conda-forge::scikit-learn
+  - conda-forge::matplotlib
+  - conda-forge::jupyterlab
+  - conda-forge::cudatoolkit=11.2
+  - conda-forge::cudnn=8.1.0
+  - conda-forge::python=3.9

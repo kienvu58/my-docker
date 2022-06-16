@@ -22,39 +22,39 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update -y --fix-missing \
       screen \
       tzdata \
       zlib1g-dev \
+      bash-completion \
+      vim \
+      openssh-server \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* \
     && curl https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -L -o /usr/bin/tini \
     && chmod +x /usr/bin/tini
 
 ENV CONDA_ROOT=/conda
-ENV NOTEBOOKS_DIR=/root
 
 ARG CONDA_VERSION=4.12.0
 
 RUN curl https://repo.anaconda.com/miniconda/Miniconda3-py39_${CONDA_VERSION}-Linux-x86_64.sh -k -o /miniconda.sh \
     && sh /miniconda.sh -b -p ${CONDA_ROOT} \
     && rm -f /miniconda.sh \
-    && echo "conda ${CONDA_VERSION}" >> /conda/conda-meta/pinned \
-    && ${CONDA_ROOT}/bin/conda init bash \
-    && echo "#!/bin/bash\n\
-      source /conda/bin/activate ds\n\
-      jupyter-lab --allow-root --ip=0.0.0.0 --no-browser --NotebookApp.token='' --notebook-dir=${NOTEBOOKS_DIR}" > /run-jupyter \
-    && chmod 755 /run-jupyter \
-    && mkdir -p ${NOTEBOOKS_DIR}
+    && ${CONDA_ROOT}/bin/conda init bash 
 
-RUN ${CONDA_ROOT}/bin/conda create -n ds python=3.9 \
-    && echo "conda activate ds" >> ${HOME}/.bashrc \
-    && bash -c 'source ${CONDA_ROOT}/bin/activate ds ; \
-      conda install -c conda-forge nodejs==17.9.0 jupyterlab -y ; \
-      jupyter labextension install -y --clean \
-        @jupyter-widgets/jupyterlab-manager' \
+COPY environment.yaml /
+
+RUN ${CONDA_ROOT}/bin/conda env create -n ds -f /environment.yaml
+
+COPY sshd_config /etc/ssh/
+COPY entrypoint.sh /
+RUN bash -c 'source ${CONDA_ROOT}/bin/activate ds' \
+    && echo "conda activate ds\nexport LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu:${CONDA_ROOT}/envs/ds/lib/" >> ${HOME}/.bashrc \
     && ${CONDA_ROOT}/bin/conda clean -afy \
     && find ${CONDA_ROOT} -follow -type f -name '*.pyc' -delete \
-    && find ${CONDA_ROOT} -follow -type f -name '*.js.map' -delete
+    && find ${CONDA_ROOT} -follow -type f -name '*.js.map' -delete \
+    && echo "#!/bin/bash\n\
+      source /conda/bin/activate ds\n\
+      jupyter-lab --allow-root --ip=0.0.0.0 --no-browser --NotebookApp.token='' --notebook-dir=/root" > /run-jupyter \
+    && chmod 755 /run-jupyter \
+    && chmod 755 /entrypoint.sh
 
-EXPOSE 8888
-
-WORKDIR ${NOTEBOOKS_DIR}
-SHELL ["/bin/bash", "-c"]
+WORKDIR /root
 ENTRYPOINT [ "/usr/bin/tini", "--" ]
-CMD ["/run-jupyter" ]
+CMD ["/entrypoint.sh"]
