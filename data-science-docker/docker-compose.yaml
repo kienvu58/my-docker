@@ -1,0 +1,5 @@
+version: "3"
+services:
+  ds:
+    image: kienvt
+    network_mode: host
