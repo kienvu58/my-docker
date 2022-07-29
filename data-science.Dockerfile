@@ -1,7 +1,4 @@
-ARG DOCKER_REPO=nvcr.io/nvidia/cuda
-ARG CUDA_VERSION=11.6.2
-ARG OS_FLAVOR=devel-ubuntu20.04
-FROM ${DOCKER_REPO}:${CUDA_VERSION}-${OS_FLAVOR}
+FROM ubuntu:20.04
 
 ENV PATH=${PATH}:/conda/bin
 ENV SHELL=/usr/bin/bash
