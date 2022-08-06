@@ -21,6 +21,7 @@ services:
     image: vectorized/console:master-8fcce39
     environment:
       KAFKA_BROKERS: redpanda:29092
+      KAFKA_MESSAGEPACK_ENABLED: true
     ports:
       - 8080:8080
     depends_on:
