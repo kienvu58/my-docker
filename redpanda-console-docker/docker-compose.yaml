@@ -18,10 +18,17 @@ services:
       - 28082:28082
       - 29092:29092
   console: 
-    image: vectorized/console:master-8fcce39
+    image: vectorized/console:latest
+    entrypoint: /bin/sh
+    command: -c "echo \"$$CONSOLE_CONFIG_FILE\" > /tmp/config.yml; /app/console"
     environment:
-      KAFKA_BROKERS: redpanda:29092
-      KAFKA_MESSAGEPACK_ENABLED: true
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:29092"]
+          messagePack:
+            enabled: true
+            topicNames: ["/.*msgpack.*/"]
     ports:
       - 8080:8080
     depends_on:
